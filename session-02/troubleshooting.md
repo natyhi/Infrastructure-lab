@@ -1,0 +1,3 @@
+Ubuntu did not install properly on first try. I remove all files and installed again. I was stuck on understanding why I needed to uninstall the medium here is what I googled.
+he installer asks you to do this right before the final reboot for two reasons:Prevents installation loops: If you leave the USB plugged in, your computer might boot right back into the installer instead of your new Ubuntu system.Forces hard drive boot: It ensures your computer loads the newly installed operating system directly from your internal storage.
+After, this research I was able to understand that I needed to have the optical drive empty. This is important to do or it will not install the updated ubuntu. 
