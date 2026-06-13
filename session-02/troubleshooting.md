@@ -1,6 +1,42 @@
-Ubuntu did not install properly on first try. I remove all files and installed again. I was stuck on understanding why I needed to uninstall the medium here is what I googled.
-he installer asks you to do this right before the final reboot for two reasons:Prevents installation loops: If you leave the USB plugged in, your computer might boot right back into the installer instead of your new Ubuntu system.Forces hard drive boot: It ensures your computer loads the newly installed operating system directly from your internal storage.
-After, this research I was able to understand that I needed to have the optical drive empty. This is important to do or it will not install the updated ubuntu. 
-I was able to successfully update my password by restarting my VPS or just click reset from the Machine toolbar. after that I typed 'e' and was able to edit the boot parameters I had to look for 'ro' and replace it with 'rw init=/bin/bash' (w/o) the ''. After I held crtl +x and to update the VPS with new parameters.
-Then I typed passwd root to be able to change password ( make it something easy. Next I typed reboot -f to this will help excute the reboot. I tried this several times geting frusted and it still said Login incorreect. closed my laptop for the day and walked away. The next day I tried one more time but then I realized something.
-After all of this I realized I was typing my user name wrong, and I had to unistall and start over. Once I reinstalled everything work accordinly.
+## Ubuntu Installation and Password Reset Troubleshooting
+
+Ubuntu did not install properly on my first attempt. To troubleshoot the issue, I removed all existing files and started the installation process again from scratch.
+
+One thing that confused me was why I needed to remove the installation media before the final reboot. After doing some research, I found that Ubuntu requires this step for two reasons:
+
+* It prevents the system from booting back into the installer and creating an installation loop.
+* It forces the machine to boot from the internal storage where Ubuntu was installed.
+
+After researching this, I understood that the installation media (optical drive/ISO) needed to be removed before rebooting. If it remains attached, the system may not boot into the newly installed version of Ubuntu.
+
+After the installation, I needed to reset the root password. I restarted the VPS using the **Reset** option from the Machine toolbar. During boot, I pressed **e** to edit the boot parameters.
+
+I located the parameter:
+
+`ro`
+
+and replaced it with:
+
+`rw init=/bin/bash`
+
+I then pressed **Ctrl + X** to boot with the modified parameters.
+
+Once the system loaded into the shell, I entered:
+
+`passwd root`
+
+to create a new root password. After updating the password, I used:
+
+`reboot -f`
+
+to force a reboot and apply the changes.
+
+I repeated this process several times because I continued receiving a **"Login incorrect"** error. At that point, I became frustrated because I had successfully changed the password, but I still could not access the system. I eventually stopped troubleshooting for the day and came back to it the following morning with a fresh perspective.
+
+The next day, while reviewing each step again, I discovered that the issue was not Ubuntu, the installation process, or the password reset procedure. The actual problem was that I had been entering my username incorrectly during login.
+
+Once I identified the typo, I reinstalled Ubuntu and repeated the setup process. This time, everything worked as expected, and I was able to log in successfully.
+
+### Key Takeaway
+
+This lab reminded me that troubleshooting is not always about finding a complex technical issue. Sometimes the root cause is a simple human error. Before assuming the operating system, configuration, or installation is broken, it is important to verify the basics, including usernames, passwords, and command syntax.
