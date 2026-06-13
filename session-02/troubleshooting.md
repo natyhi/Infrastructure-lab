@@ -7,7 +7,7 @@ One thing that confused me was why I needed to remove the installation media bef
 * It prevents the system from booting back into the installer and creating an installation loop.
 * It forces the machine to boot from the internal storage where Ubuntu was installed.
 
-After researching this, I understood that the installation media (optical drive/ISO) needed to be removed before rebooting. If it remains attached, the system may not boot into the newly installed version of Ubuntu.
+After researching this, I understood that the installation media needed to be removed before rebooting. It may boot back into the installer instead of the newly installed Ubuntu system.
 
 After the installation, I needed to reset the root password. I restarted the VPS using the **Reset** option from the Machine toolbar. During boot, I pressed **e** to edit the boot parameters.
 
