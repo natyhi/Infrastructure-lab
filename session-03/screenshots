@@ -1,0 +1,3 @@
+##Docker pull down
+I was sucessfully able to connect to Docker and run a container by ssh into my host machine.
+I had to run sudo in order to connect ngnix
