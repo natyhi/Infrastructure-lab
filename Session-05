@@ -10,6 +10,66 @@ This lab also helped me understand something very important: **just because some
 
 ---
 
+## Why Use File Browser?
+
+Before completing this lab, I understood that File Browser gave me a graphical way to access files, but I wanted to understand why having a private file service could actually be useful.
+
+Normally, if I want to manage files directly on my Ubuntu server, I can SSH into the server and use Linux commands such as `ls`, `cd`, `mkdir`, `cp`, `mv`, and `rm`. That works for someone who knows how to use the Linux command line, but not every person who needs access to files should need SSH access or know Linux commands.
+
+File Browser provides another way to interact with those files. An authorized user can open a web browser, sign in, and use a graphical interface to work with files and folders. The experience is similar to using a traditional file explorer, but the files are being stored on the server rather than simply being managed through the local computer's file system.
+
+This can be useful in a home lab, small business, or self-hosted environment where files need to be stored in a central location and accessed by authorized users.
+
+The basic idea looks like this:
+
+```text
+                   Ubuntu Server
+                        |
+                  File Browser
+                        |
+             -----------------------
+             |          |          |
+          User A      User B      Admin
+             |          |          |
+          Files       Files     Management
+```
+
+This also helped me understand that having a File Browser is not only about convenience. **Access control and security are important parts of running a file service.**
+
+Not every user should automatically have root or administrator-level access. Different users may need different levels of access depending on what they are supposed to do.
+
+For example:
+
+```text
+Administrator
+    |
+    └── Broader management permissions
+
+Regular User
+    |
+    └── Access needed to perform assigned tasks
+
+Unauthorized User
+    |
+    └── No access
+```
+
+This connects directly to three security concepts:
+
+* **Authentication:** Who are you?
+* **Authorization:** What are you allowed to access or do?
+* **Least Privilege:** What is the minimum level of access you need to perform your job?
+
+I encountered these concepts firsthand when I realized my original File Browser setup was using root-level privileges. The service worked, but giving an application more privileges than it needs creates unnecessary security risk.
+
+That made me realize that the goal should not only be to make a service work. I also need to understand **who has access, what permissions they have, and whether those permissions are actually necessary.**
+
+Another important lesson was that calling something a "private file service" does not automatically make it secure or private. Authentication, permissions, network configuration, credential management, and how the service is exposed all contribute to protecting the files.
+
+The purpose of this lab became more than installing File Browser. I was building a self-hosted file service that allowed me to manage files through a web interface while learning more about **Docker, Linux permissions, authentication, authorization, access control, and the principle of least privilege.**
+
+---
+
 ## 1. Connecting to My Ubuntu Server
 
 I first opened my Ubuntu VM and connected to the server using SSH.
@@ -122,7 +182,7 @@ This made the ownership of the host directories match the user identity I config
 I then restarted File Browser:
 
 ```bash
-docker compose up 
+docker compose up -d
 ```
 
 ---
@@ -191,11 +251,11 @@ In a real environment, someone would need responsibility for:
 
 # What I Liked About File Browser
 
-I thought File Browser was a neat tool because it provides a **graphical, web-based file management interface** without requiring me to manage every file directly from the Linux terminal.
+I thought File Browser was a neat tool because it gave me a **graphical, web-based way to manage files stored on my Ubuntu server** without requiring me to manage every file directly from the Linux terminal.
 
 The interface gives a familiar file-explorer experience through a browser while the actual files remain stored on infrastructure that I control.
 
-This could be useful for a private lab, home server, or other self-hosted environment where I want convenient access to files without relying completely on a third-party cloud storage service.
+This could be useful for a private lab, home server, small business, or other self-hosted environment where users need convenient access to centrally stored files.
 
 One thing I would still consider in a production environment is how the service is exposed. A private service should have proper authentication and network protections, and I would not expose the File Browser interface directly to the public internet without additional security controls.
 
@@ -206,7 +266,7 @@ One thing I would still consider in a production environment is how the service 
 ### Start File Browser
 
 ```bash
-docker compose up -d
+docker compose up
 ```
 
 ### Stop File Browser
@@ -277,6 +337,8 @@ This lab gave me hands-on experience with:
 * SSH
 * Port mapping
 * Web-based file management
+* Authentication and authorization
+* Access control
 * Administrative credential management
 * Principle of least privilege
 * Troubleshooting Docker permissions
@@ -306,6 +368,7 @@ I also learned that Docker containers can be temporary, but the data and configu
 ✅ Configured UID and GID for `labuser`
 ✅ Corrected directory ownership
 ✅ Applied the principle of least privilege
+✅ Connected the lab to authentication, authorization, and access control
 ✅ Verified the container and logs
 ✅ Learned more about Docker persistence and credential management
 
@@ -315,11 +378,12 @@ I also learned that Docker containers can be temporary, but the data and configu
 
 This lab looked simple at first because I was basically creating a private place to manage files through a browser. Once I started working with it, I realized there was much more happening underneath the interface.
 
-I had to think about **who owns the files, what user the container is running as, what permissions that user should have, where the data is actually stored, and what happens when the container is recreated**.
+I had to think about **who owns the files, what user the container is running as, what permissions that user should have, where the data is actually stored, who should be allowed to access it, and what happens when the container is recreated**.
 
-That made this more than just a File Browser installation for me. It became another lesson in understanding how Linux permissions, Docker, networking, and security all work together.
+That made this more than just a File Browser installation for me. It became another lesson in understanding how Linux permissions, Docker, networking, access control, and security all work together.
 
 *Session-05 of my Ubuntu Lab.*
+
 
 update edit-
 ** A simple way of looking at this**
