@@ -1,0 +1,322 @@
+# Session-05: Private File Service Using File Browser
+
+## Project Overview
+
+For this lab, I created a **private file service using File Browser running inside a Docker container on my Ubuntu server**.
+
+The goal was to create a web-based interface where I could access and manage files through my browser instead of having to manage everything directly from the Ubuntu command line.
+
+This lab also helped me understand something very important: **just because something works does not mean it is configured securely.** My first setup worked, but I realized I was running it with more privileges than I needed. I went back, corrected the permissions, and configured the container to follow the principle of least privilege.
+
+---
+
+## 1. Connecting to My Ubuntu Server
+
+I first opened my Ubuntu VM and connected to the server using SSH.
+
+Once connected, I navigated to my File Browser project directory:
+
+```bash
+cd ~/filebrowser
+```
+
+I then opened my Docker Compose configuration:
+
+```bash
+nano docker-compose.yml
+```
+
+---
+
+## 2. Configuring File Browser with Docker Compose
+
+I added the File Browser service to my `docker-compose.yml` file:
+
+```yaml
+services:
+  filebrowser:
+    image: filebrowser/filebrowser:latest
+    container_name: filebrowser
+
+    user: "${UID}:${GID}"
+
+    ports:
+      - "8082:80"  # Using port 8082 to avoid conflict with Pi-hole
+
+    volumes:
+      - ./data:/data
+      - ./config:/config
+      - ./files:/srv
+
+    restart: unless-stopped
+```
+
+I used port **8082** because I already had Pi-hole running in my lab environment and wanted to avoid creating a port conflict.
+
+The `/srv` volume is the location File Browser uses for the files that I want to access through its web interface.
+
+---
+
+## 3. Setting My UID and GID
+
+One issue I discovered was that the `UID` and `GID` variables needed actual values.
+
+I created an `.env` file containing the UID and GID of my regular Ubuntu user:
+
+```bash
+echo "UID=$(id -u)" >> .env
+echo "GID=$(id -g)" >> .env
+```
+
+I verified the values using:
+
+```bash
+cat .env
+```
+
+My output was:
+
+```text
+UID=1000
+GID=1000
+```
+
+These values represent my regular `labuser` account.
+
+Docker Compose can use these variables here:
+
+```yaml
+user: "${UID}:${GID}"
+```
+
+This allows the container process to run using the specified user and group IDs instead of unnecessarily running the application as root.
+
+### Why This Matters
+
+This introduced me to the **principle of least privilege**.
+
+A service should only receive the permissions it actually needs to perform its job. Running an application as root when root access is not required creates unnecessary security risk.
+
+---
+
+## 4. Correcting Directory Ownership
+
+I initially had permission and ownership issues with the directories being mounted into the container.
+
+Before recreating the container, I stopped it:
+
+```bash
+docker compose down
+```
+
+I then changed ownership of the File Browser directories to my regular user's UID and GID:
+
+```bash
+sudo chown -R $(id -u):$(id -g) ./data
+sudo chown -R $(id -u):$(id -g) ./config
+sudo chown -R $(id -u):$(id -g) ./files
+```
+
+This made the ownership of the host directories match the user identity I configured for the container.
+
+I then restarted File Browser:
+
+```bash
+docker compose up -d
+```
+
+---
+
+## 5. Accessing My Private File Browser
+
+After starting the container, I opened a web browser and entered my Ubuntu server's IP address with port `8082`.
+
+Example:
+
+```text
+http://<SERVER-IP>:8082
+```
+
+The File Browser login page appeared.
+
+After signing in with the administrator credentials generated/configured for the service, I was able to access the private file management interface.
+
+I also created a temporary file to test that I could successfully create and manage files through the browser.
+
+---
+
+# The Security Problem I Discovered
+
+My original setup was running with root-level privileges.
+
+Although the application worked, **running a file-management service as root when it does not require root access is a security risk**.
+
+A file management application can create, modify, upload, download, and delete files. Giving that service unnecessary root privileges could greatly increase the damage caused by a configuration mistake or security vulnerability.
+
+Instead of leaving the configuration alone because "it worked," I stopped the container and corrected the user permissions.
+
+That was probably my biggest lesson from this lab:
+
+> **Working does not automatically mean secure.**
+
+---
+
+## File Ownership and Container Recreation
+
+I also learned how important file ownership becomes when working with Docker bind mounts.
+
+Files created with one UID/GID may not automatically be accessible to a container that is later recreated under a different user identity.
+
+This helped me understand why permissions and ownership have to be planned instead of just giving everything root access whenever a permission error appears.
+
+---
+
+## Password Management
+
+Another thing I noticed while working with File Browser was how administrative credentials were handled when I recreated my environment.
+
+Depending on how the application's configuration and database are persisted, recreating a container without properly preserving its configuration can result in new initial credentials or other configuration changes.
+
+This made me think about **credential management**.
+
+In a real environment, someone would need responsibility for:
+
+* Managing administrative credentials
+* Protecting passwords from unauthorized users
+* Making sure passwords are not stored in public GitHub repositories
+* Controlling who receives administrative access
+* Making sure configuration data is persistent before containers are recreated
+
+---
+
+# What I Liked About File Browser
+
+I thought File Browser was a neat tool because it provides a **graphical, web-based file management interface** without requiring me to manage every file directly from the Linux terminal.
+
+The interface gives a familiar file-explorer experience through a browser while the actual files remain stored on infrastructure that I control.
+
+This could be useful for a private lab, home server, or other self-hosted environment where I want convenient access to files without relying completely on a third-party cloud storage service.
+
+One thing I would still consider in a production environment is how the service is exposed. A private service should have proper authentication and network protections, and I would not expose the File Browser interface directly to the public internet without additional security controls.
+
+---
+
+# Commands Used During the Lab
+
+### Start File Browser
+
+```bash
+docker compose up -d
+```
+
+### Stop File Browser
+
+```bash
+docker compose down
+```
+
+### Check UID and GID
+
+```bash
+id
+```
+
+or:
+
+```bash
+id -u
+id -g
+```
+
+### Create Environment Variables
+
+```bash
+echo "UID=$(id -u)" >> .env
+echo "GID=$(id -g)" >> .env
+```
+
+### Verify Environment Variables
+
+```bash
+cat .env
+```
+
+### Correct Directory Ownership
+
+```bash
+sudo chown -R $(id -u):$(id -g) ./data
+sudo chown -R $(id -u):$(id -g) ./config
+sudo chown -R $(id -u):$(id -g) ./files
+```
+
+### Check Running Containers
+
+```bash
+docker ps
+```
+
+### Check Container Logs
+
+```bash
+docker logs filebrowser
+```
+
+---
+
+# What I Learned
+
+This lab gave me hands-on experience with:
+
+* Docker Compose
+* Linux file permissions
+* Linux UID and GID values
+* Docker bind mounts
+* Environment variables
+* Container persistence
+* File and directory ownership
+* SSH
+* Port mapping
+* Web-based file management
+* Administrative credential management
+* Principle of least privilege
+* Troubleshooting Docker permissions
+
+The biggest thing I learned was **not to solve every permission problem by using root**.
+
+Root may make a permission error disappear, but that does not necessarily make it the correct solution.
+
+I learned to ask:
+
+**What permissions does this application actually need?**
+
+Using the UID and GID of my regular Ubuntu account allowed me to give File Browser the access it needed without giving it unnecessary root privileges.
+
+I also learned that Docker containers can be temporary, but the data and configuration they use need to be intentionally persisted. If I recreate a container without properly preserving its configuration, I may lose settings, credentials, or access to files because of ownership differences.
+
+---
+
+## Final Result
+
+✅ Connected to Ubuntu server through SSH
+✅ Deployed File Browser using Docker Compose
+✅ Configured File Browser on port 8082
+✅ Accessed File Browser through a web browser
+✅ Created and managed files through the web interface
+✅ Identified unnecessary root privileges
+✅ Configured UID and GID for `labuser`
+✅ Corrected directory ownership
+✅ Applied the principle of least privilege
+✅ Verified the container and logs
+✅ Learned more about Docker persistence and credential management
+
+---
+
+## Final Reflection
+
+This lab looked simple at first because I was basically creating a private place to manage files through a browser. Once I started working with it, I realized there was much more happening underneath the interface.
+
+I had to think about **who owns the files, what user the container is running as, what permissions that user should have, where the data is actually stored, and what happens when the container is recreated**.
+
+That made this more than just a File Browser installation for me. It became another lesson in understanding how Linux permissions, Docker, networking, and security all work together.
+
+*Session-05 of my Ubuntu Lab.*
