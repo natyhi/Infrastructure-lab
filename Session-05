@@ -122,7 +122,7 @@ This made the ownership of the host directories match the user identity I config
 I then restarted File Browser:
 
 ```bash
-docker compose up -d
+docker compose up 
 ```
 
 ---
@@ -320,3 +320,15 @@ I had to think about **who owns the files, what user the container is running as
 That made this more than just a File Browser installation for me. It became another lesson in understanding how Linux permissions, Docker, networking, and security all work together.
 
 *Session-05 of my Ubuntu Lab.*
+
+update edit-
+** A simple way of looking at this**
+Your computer
+    ↓
+Web browser
+    ↓
+File Browser website
+    ↓
+Docker container
+    ↓
+Ubuntu server files
