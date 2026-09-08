@@ -1,1 +1,151 @@
 
+## Understanding the Database Mount and Persistence
+
+Another important concept I learned during this lab was **Docker persistence**.
+
+While troubleshooting File Browser, I noticed that the application needed a database called `filebrowser.db`. The database stores information that File Browser needs to remember, including user and application data.
+
+Originally, my Docker Compose configuration included:
+
+```yaml
+volumes:
+  - ./data:/data
+  - ./config:/config
+  - ./files:/srv
+```
+
+While troubleshooting the configuration, I updated the persistent storage to separate the files, configuration, and File Browser database:
+
+```yaml
+volumes:
+  - ./files:/srv
+  - ./config:/config
+  - ./database:/database
+```
+
+I then created the database directory on my Ubuntu server:
+
+```bash
+mkdir -p database
+```
+
+I also made sure the directory ownership matched the UID and GID being used by the File Browser container:
+
+```bash
+sudo chown -R $(id -u):$(id -g) ./database
+```
+
+When I started File Browser again, I received:
+
+```text
+WARNING: filebrowser.db can't be found. Initializing in /database/
+Using database: /database/filebrowser.db
+Performing quick setup
+```
+
+At first, seeing that the database could not be found looked like another error. I learned that in this case File Browser was telling me that an existing database was not present, so it was initializing a new `filebrowser.db` in the database directory.
+
+### What Is a Docker Mount?
+
+The line:
+
+```yaml
+- ./database:/database
+```
+
+connects two locations.
+
+```text
+Ubuntu Host                         Docker Container
+
+~/filebrowser/database  <-------->  /database
+        |
+        └── filebrowser.db
+```
+
+The left side:
+
+```text
+./database
+```
+
+is a directory on my Ubuntu server.
+
+The right side:
+
+```text
+/database
+```
+
+is where File Browser sees that directory from inside the container.
+
+This is called a **bind mount**.
+
+The application can work with `/database` from inside its container, while the actual database file is stored in the `./database` directory on my Ubuntu server.
+
+### Why Persistence Matters
+
+This helped me understand an important difference between a **container** and the **data used by the container**.
+
+A Docker container can be stopped, removed, updated, or recreated. I do not want important application data to depend entirely on the life of that container.
+
+Instead, I can keep important data outside the container:
+
+```text
+              Ubuntu VM
+          Persistent Storage
+                 |
+       -----------------------
+       |          |          |
+    ./files    ./config   ./database
+       |          |          |
+       |          |          |
+       -------- Docker -------
+                 |
+          File Browser
+            Container
+```
+
+For my File Browser setup:
+
+| Host Directory | Container Directory | Purpose                    |
+| -------------- | ------------------- | -------------------------- |
+| `./files`      | `/srv`              | Files being managed        |
+| `./config`     | `/config`           | File Browser configuration |
+| `./database`   | `/database`         | File Browser database      |
+
+This means the **container can be replaceable while the important data remains persistent**.
+
+If the File Browser container is recreated, Docker can mount these directories into the new container so File Browser can continue using its persistent files, configuration, and database.
+
+### Connection to the Admin Account
+
+This also helped me understand what happened when File Browser displayed:
+
+```text
+User 'admin' initialized with randomly generated password
+```
+
+Because File Browser was initializing a new database, it also needed to initialize its administrative account.
+
+Once `filebrowser.db` is stored in the persistent `./database` directory, the application's account data can survive normal container replacement instead of depending solely on a particular container instance.
+
+This showed me that **persistent storage is also important for identity and access management**. Losing an application's database can mean losing more than files. Depending on the application, it can also mean losing users, permissions, settings, and other application state.
+
+### What I Learned
+
+Before this lab, I understood that Docker could run an application inside a container. I did not fully understand what should happen to the application's data when that container is recreated.
+
+Now I understand the separation:
+
+```text
+Container = Application environment
+     +
+Mounts = Persistent application data
+```
+
+The container does not have to be permanent.
+
+**The data does.**
+
+This troubleshooting experience helped me understand Docker bind mounts, persistent storage, application databases, file ownership, and why planning where an application's data is stored is an important part of deploying a containerized service.
